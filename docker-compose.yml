@@ -1,0 +1,94 @@
+version: '3'
+
+services:
+  boltcard:
+    container_name: boltcard_main
+    image: prettyrollcake/boltcard:20230419
+    depends_on:
+      - db
+    restart: unless-stopped
+    environment:
+      - LOG_LEVEL=DEBUG
+      - DB_HOST=10.21.100.102
+      - DB_PORT=5432
+      - DB_USER=cardapp
+      - DB_PASSWORD=database_password
+      - DB_NAME=card_db
+    volumes:
+      - ~/umbrel/app-data/lightning/data/lnd/tls.cert:/boltcard/tls.cert:ro
+      - ~/umbrel/app-data/lightning/data/lnd/data/chain/bitcoin/mainnet/SendPaymentV2.macaroon:/boltcard/SendPaymentV2.macaroon:ro
+    ports:
+      - 9000:9000 # LNURLの待ち受けポート
+      - 9001:9001 # Boltcard serverのAPIポート
+    networks:
+      umbrel_main_network:
+        ipv4_address: 10.21.100.101
+
+  db:
+    container_name: boltcard_db
+    image: postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=cardapp
+      - POSTGRES_PASSWORD=database_password
+      - POSTGRES_DB=card_db
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - ${PWD}/data/db/db-data:/var/lib/postgresql/data
+      - ${PWD}/data/db/select_db.sql:/docker-entrypoint-initdb.d/select_db.sql
+      - ${PWD}/data/db/create_db.sql:/docker-entrypoint-initdb.d/create_db.sql
+      - ${PWD}/data/db/settings.sql:/docker-entrypoint-initdb.d/settings.sql # boltcardサーバの設定は全部ココにある
+    ports:
+      - 5432:5432
+    networks:
+      umbrel_main_network:
+        ipv4_address: 10.21.100.102
+
+  web:
+    container_name: boltcard_hub
+    image: prettyrollcake/boltcardhub:20230419
+    depends_on: [ redis ]
+    restart: on-failure
+    stop_grace_period: 5m30s
+    stop_signal: SIGINT
+    environment:
+      PORT: "9002"
+      LND_CERT_FILE: "/lnd/tls.cert"
+      LND_ADMIN_MACAROON_FILE: "/lnd/data/chain/bitcoin/mainnet/admin.macaroon"
+      # intraHubFeeは出金手数料, forwardReserveFeeはチャネルリザーブと同じ考え
+      CONFIG: '{
+        "enableUpdateDescribeGraph": false,
+        "postRateLimit": 100,
+        "rateLimit": 200,
+        "forwardReserveFee": 0.000001,
+        "intraHubFee": 0.000001,
+        "redis": { "port": 6379, "host": "boltcard_redis", "family": 4, "password": "moneyprintergobrrr", "db": 0 }, 
+        "lnd": { "url": "10.21.21.9:10009", "password": ""}, 
+        "boltcardservice": { "url": "http://10.21.100.101:9001", "service_url": "http://10.21.100.101:9000" }
+      }'
+    volumes:
+      - ~/umbrel/app-data/lightning/data/lnd:/lnd:ro
+    ports:
+      - 9002:9002
+    networks:
+      umbrel_main_network:
+        ipv4_address: 10.21.100.103
+
+  redis:
+    container_name: boltcard_redis
+    image: redis:6.2-buster
+    restart: on-failure
+    stop_grace_period: 5m
+    stop_signal: SIGINT
+    command: redis-server --requirepass moneyprintergobrrr
+    volumes:
+      - ${PWD}/data/redis:/data
+    ports:
+      - 6379:6379
+    networks:
+      umbrel_main_network:
+        ipv4_address: 10.21.100.104
+
+networks:
+  umbrel_main_network:
+    external: true
