@@ -14,7 +14,7 @@ INSERT INTO settings (name, value) VALUES ('MAX_WITHDRAW_SATS', '1000000');
 INSERT INTO settings (name, value) VALUES ('LN_HOST', '10.21.21.9');
 INSERT INTO settings (name, value) VALUES ('LN_PORT', '10009');
 INSERT INTO settings (name, value) VALUES ('LN_TLS_FILE', '/boltcard/tls.cert');
-INSERT INTO settings (name, value) VALUES ('LN_MACAROON_FILE', '/boltcard/admin.macaroon');
+INSERT INTO settings (name, value) VALUES ('LN_MACAROON_FILE', '/boltcard/SendPaymentV2.macaroon');
 INSERT INTO settings (name, value) VALUES ('FEE_LIMIT_SAT', '10');
 INSERT INTO settings (name, value) VALUES ('FEE_LIMIT_PERCENT', '0.5');
 INSERT INTO settings (name, value) VALUES ('LN_TESTNODE', '');
