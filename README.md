@@ -4,6 +4,8 @@ Boltcard serverサイド(serverとLndHub)をUmbrelで構成する為のファイ
 オリジナルではCaddyも含まれている。<br>
 この構成では含まれてない。ドメイン名とそのためのリバースプロキシの構成は各自で用意して。<br>
 
+botlcard server用にマカロンを作る必要がある。<br>
+bakemacaroon-for-boltcardserver.shを使えば作れる。<br>
 
 data/db/settings.sqlで以下2つを自分で書き換える。<br>
 INSERT INTO settings (name, value) VALUES ('AES_DECRYPT_KEY', 'ランダム値'); -- set this. $ hexdump -vn16 -e'4/4 "%08x" 1 "\n"' /dev/random <br>
