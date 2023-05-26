@@ -2,14 +2,14 @@ version: '3'
 
 services:
   boltcard:
-    container_name: boltcard_main
-    image: prettyrollcake/boltcard:20230419
+    container_name: boltcard_server
+    image: prettyrollcake/boltcard:20230525
     depends_on:
       - db
     restart: unless-stopped
     environment:
       - LOG_LEVEL=DEBUG
-      - DB_HOST=10.21.100.102
+      - DB_HOST=boltcard_db
       - DB_PORT=5432
       - DB_USER=cardapp
       - DB_PASSWORD=database_password
@@ -45,7 +45,7 @@ services:
         ipv4_address: 10.21.100.102
 
   web:
-    container_name: boltcard_hub
+    container_name: boltcard_lndhub
     image: prettyrollcake/boltcardhub:20230419
     depends_on: [ redis ]
     restart: on-failure
@@ -55,6 +55,7 @@ services:
       PORT: "9002"
       LND_CERT_FILE: "/lnd/tls.cert"
       LND_ADMIN_MACAROON_FILE: "/lnd/data/chain/bitcoin/mainnet/admin.macaroon"
+      GROUNDCONTROL: "" # ここを空にすることでGroundControlを使わずにすむ。
       # intraHubFeeは出金手数料, forwardReserveFeeはチャネルリザーブと同じ考え
       CONFIG: '{
         "enableUpdateDescribeGraph": false,
@@ -64,7 +65,7 @@ services:
         "intraHubFee": 0.000001,
         "redis": { "port": 6379, "host": "boltcard_redis", "family": 4, "password": "moneyprintergobrrr", "db": 0 }, 
         "lnd": { "url": "10.21.21.9:10009", "password": ""}, 
-        "boltcardservice": { "url": "http://10.21.100.101:9001", "service_url": "http://10.21.100.101:9000" }
+        "boltcardservice": { "url": "http://boltcard_server:9001", "service_url": "http://boltcard_server:9000" }
       }'
     volumes:
       - ~/umbrel/app-data/lightning/data/lnd:/lnd:ro
